@@ -1,0 +1,6 @@
+{
+  "name": "Piece of Cake - 療癒系甜點店",
+  "description": "客製化蛋糕研製室。全面轉向極簡專業、情緒科學與建築美學，支持實時橫切、物理重力落下模擬、光學切換與心靈探針分析。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

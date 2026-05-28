@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>療癒專區 - Piece of Cake</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cake: '#FFF4C1',
+                        'cake-dark': '#FFC1E0',
+                        berry: '#FF8E8E',
+                        accent: '#F1E1FF',
+                        ink: '#4A3B3B',
+                    },
+                    fontFamily: {
+                        display: ['Space Grotesk', 'sans-serif'],
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-cake text-ink font-sans antialiased selection:bg-berry selection:text-white overflow-x-hidden">
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="fixed inset-0 z-[200] bg-ink flex flex-col items-center justify-center">
+        <div class="relative mb-8 flex flex-col items-center">
+            <div id="running-cake" class="text-7xl running-cake">🍰</div>
+            <div class="cake-shadow mt-2 w-12 h-2 bg-black/40 blur-sm rounded-full"></div>
+        </div>
+        <div class="text-center">
+            <h1 id="loader-text" class="text-2xl font-display font-bold text-cake tracking-widest uppercase">Loading...</h1>
+            <div class="w-12 h-[1px] bg-berry mx-auto mt-4"></div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progress-bar" class="fixed top-0 left-0 h-1 bg-berry z-[100] w-0"></div>
+
+    <!-- Cart Drawer (Same as index) -->
+    <div id="cart-drawer" class="fixed inset-y-0 right-0 w-full md:w-[400px] bg-cake z-[300] shadow-2xl translate-x-full transition-transform duration-500 ease-in-out border-l border-ink/10">
+        <div class="h-full flex flex-col">
+            <div class="p-6 border-b border-ink/10 flex justify-between items-center">
+                <h2 class="text-xl font-display font-bold">購物籃</h2>
+                <button id="close-cart" class="p-2 hover:opacity-50 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-6">
+                <div id="empty-cart-msg" class="text-center py-12 opacity-40">
+                    <p class="text-sm italic">購物籃目前是空的。</p>
+                </div>
+            </div>
+            <div class="p-6 border-t border-ink/10 bg-cake-dark/30">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-xs font-bold tracking-widest uppercase opacity-40">總計</span>
+                    <span id="cart-total" class="text-xl font-display font-bold">NT$ 0</span>
+                </div>
+                <button class="w-full bg-ink text-cake py-4 rounded-full font-bold tracking-widest uppercase text-[10px] hover:bg-berry transition-colors duration-500 btn-cute">
+                    前往結帳
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="cart-overlay" class="fixed inset-0 bg-ink/20 backdrop-blur-sm z-[250] opacity-0 pointer-events-none transition-opacity duration-500"></div>
+
+    <!-- Product Options Modal -->
+    <div id="options-modal" class="fixed inset-0 z-[400] hidden items-center justify-center p-6">
+        <div id="options-overlay" class="absolute inset-0 bg-ink/40 modal-overlay cursor-pointer"></div>
+        <div class="relative w-full max-w-lg bg-cake rounded-[40px] shadow-3xl overflow-hidden border border-ink/5">
+            <div class="p-8 md:p-12">
+                <div class="flex justify-between items-start mb-8 gap-6">
+                    <div class="w-24 h-24 rounded-2xl overflow-hidden bg-cake-dark shrink-0 shadow-md">
+                        <img id="modal-product-image" src="" referrerpolicy="no-referrer" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="modal-product-name" class="text-3xl font-display font-bold text-ink mb-1">蛋糕名稱</h2>
+                        <p id="modal-product-base-price" class="text-sm font-bold text-berry">NT$ 0</p>
+                    </div>
+                    <button id="close-options" class="p-2 hover:bg-ink/5 rounded-full btn-cute transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+                    <!-- Box Options (Only for boxes) -->
+                    <div id="box-options-container" class="hidden space-y-8">
+                        <div>
+                            <span class="option-group-title">加購禮盒裝飾</span>
+                            <div class="grid grid-cols-1 gap-4">
+                                <label class="flex items-center justify-between p-4 bg-white/30 rounded-2xl border-2 border-ink/5 cursor-pointer hover:border-berry transition-all">
+                                    <div class="flex items-center space-x-4">
+                                        <input type="checkbox" id="add-lights" class="w-5 h-5 accent-berry" data-price="50">
+                                        <div>
+                                            <span class="block text-sm font-bold">溫馨暖光燈飾</span>
+                                            <span class="block text-[10px] opacity-40">增添浪漫氛圍</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-bold text-berry">+NT$ 50</span>
+                                </label>
+                                <label class="flex items-center justify-between p-4 bg-white/30 rounded-2xl border-2 border-ink/5 cursor-pointer hover:border-berry transition-all">
+                                    <div class="flex items-center space-x-4">
+                                        <input type="checkbox" id="add-flowers" class="w-5 h-5 accent-berry" data-price="120">
+                                        <div>
+                                            <span class="block text-sm font-bold">精緻不凋小花束</span>
+                                            <span class="block text-[10px] opacity-40">手工製作，永久保存</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-bold text-berry">+NT$ 120</span>
+                                </label>
+                                <label class="flex items-center justify-between p-4 bg-white/30 rounded-2xl border-2 border-ink/5 cursor-pointer hover:border-berry transition-all">
+                                    <div class="flex items-center space-x-4">
+                                        <input type="checkbox" id="add-card" class="w-5 h-5 accent-berry" data-price="30">
+                                        <div>
+                                            <span class="block text-sm font-bold">手寫祝福代客寫信</span>
+                                            <span class="block text-[10px] opacity-40">代寫您的心情卡片</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-bold text-berry">+NT$ 30</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Size Options (Only for cakes) -->
+                    <div id="cake-options-container">
+                        <span class="option-group-title">選擇尺寸</span>
+                        <div class="grid grid-cols-3 gap-4">
+                            <label class="size-option">
+                                <input type="radio" name="size" value="4吋" class="hidden" checked>
+                                <div class="border-2 border-ink/5 bg-white/30 rounded-2xl p-4 text-center hover:border-cake-dark transition-all">
+                                    <span class="block text-sm font-bold">4吋</span>
+                                    <span class="block text-[10px] opacity-40 mt-1">標準價</span>
+                                </div>
+                            </label>
+                            <label class="size-option">
+                                <input type="radio" name="size" value="6吋" class="hidden">
+                                <div class="border-2 border-ink/5 bg-white/30 rounded-2xl p-4 text-center hover:border-cake-dark transition-all">
+                                    <span class="block text-sm font-bold">6吋</span>
+                                    <span class="block text-[10px] opacity-40 mt-1">+NT$ 400</span>
+                                </div>
+                            </label>
+                            <label class="size-option">
+                                <input type="radio" name="size" value="8吋" class="hidden">
+                                <div class="border-2 border-ink/5 bg-white/30 rounded-2xl p-4 text-center hover:border-cake-dark transition-all">
+                                    <span class="block text-sm font-bold">8吋</span>
+                                    <span class="block text-[10px] opacity-40 mt-1">+NT$ 800</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Candle Options (Only for cakes) -->
+                    <div id="candle-options-container">
+                        <span class="option-group-title">選擇蠟燭</span>
+                        <div class="grid grid-cols-3 gap-4 mb-4">
+                            <label class="candle-option">
+                                <input type="radio" name="candle" value="無" class="hidden" checked>
+                                <div class="border-2 border-ink/5 bg-white/30 rounded-2xl p-4 text-center hover:border-cake-dark transition-all h-full flex flex-col justify-center">
+                                    <span class="block text-sm font-bold">無</span>
+                                </div>
+                            </label>
+                            <label class="candle-option">
+                                <input type="radio" name="candle" value="一般蠟燭" class="hidden">
+                                <div class="border-2 border-ink/5 bg-white/30 rounded-2xl p-4 text-center hover:border-cake-dark transition-all h-full flex flex-col justify-center">
+                                    <span class="block text-sm font-bold">一般支狀</span>
+                                </div>
+                            </label>
+                            <label class="candle-option" id="numbered-candle-label">
+                                <input type="radio" name="candle" value="數字蠟燭" class="hidden">
+                                <div class="border-2 border-ink/5 bg-white/30 rounded-2xl p-4 text-center hover:border-cake-dark transition-all h-full flex flex-col justify-center">
+                                    <span class="block text-sm font-bold">數字蠟燭</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="age-input-container" class="hidden">
+                            <input type="number" id="candle-age" placeholder="請輸入歲數 (如: 18)" class="w-full bg-white/50 border-2 border-ink/5 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-berry transition-all" min="0" max="99">
+                        </div>
+                    </div>
+
+                    <!-- Tableware Options -->
+                    <div id="tableware-options-container">
+                        <span class="option-group-title">選擇餐具數量 (5入/組)</span>
+                        <div class="flex items-center space-x-6 p-4 bg-white/30 rounded-2xl border-2 border-ink/5">
+                            <div class="flex-1">
+                                <span class="block text-sm font-bold">餐具組數</span>
+                                <span class="block text-[10px] opacity-40">每組包含 5 個盤子與叉子</span>
+                            </div>
+                            <div class="flex items-center space-x-4 bg-white rounded-full px-4 py-2">
+                                <button id="decrease-tableware" class="hover:text-berry font-bold text-xl transition-colors">-</button>
+                                <span id="tableware-qty" class="text-sm font-bold w-4 text-center">1</span>
+                                <button id="increase-tableware" class="hover:text-berry font-bold text-xl transition-colors">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div>
+                        <span class="option-group-title">備註事項</span>
+                        <textarea id="order-remarks" placeholder="想對甜點師說的話..." class="w-full h-24 bg-white/50 border-2 border-ink/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-berry transition-all resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-12 flex items-center justify-between gap-6 pt-8 border-t border-ink/5">
+                    <div class="flex-1">
+                        <span class="text-[10px] font-bold uppercase opacity-40 block mb-1">小計</span>
+                        <span id="modal-total-price" class="text-2xl font-display font-bold text-ink">NT$ 0</span>
+                    </div>
+                    <button id="modal-confirm-add" class="flex-[1.5] bg-ink text-cake py-6 rounded-full text-xs font-bold tracking-[0.2em] uppercase hover:bg-berry transition-all btn-cute">
+                        確認加入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 py-8 border-b border-transparent">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-display font-bold tracking-tighter flex items-center group">
+                <span class="text-berry mr-2 group-hover:rotate-12 transition-transform inline-block">🍰</span> 
+                <span class="group-hover:text-cake-dark transition-colors">Piece of Cake.</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-10">
+                <a href="healing.html" class="text-[11px] font-bold tracking-[0.15em] text-berry transition-colors uppercase">療癒專區</a>
+                <a href="gift.html" class="text-[11px] font-bold tracking-[0.15em] hover:text-berry transition-colors uppercase">自選禮盒</a>
+                <a href="mood.html" class="text-[11px] font-bold tracking-[0.15em] hover:text-berry transition-colors uppercase">情緒處方</a>
+                <a href="faq.html" class="text-[11px] font-bold tracking-[0.15em] hover:text-berry transition-colors uppercase">常見問題</a>
+                <button id="cart-toggle" class="relative p-2 hover:text-berry transition-colors btn-cute bg-white/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span id="cart-count" class="absolute -top-1 -right-1 w-5 h-5 bg-berry rounded-full text-[10px] flex items-center justify-center font-bold text-white hidden shadow-sm">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32">
+        <section class="py-20">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-20">
+                    <h2 class="text-[11px] font-bold tracking-[0.4em] mb-4 opacity-40 uppercase">Healing Collection</h2>
+                    <h1 class="text-5xl md:text-6xl font-display font-bold leading-tight tracking-tighter">
+                        尋找你的 <span class="text-berry italic">療癒處方.</span>
+                    </h1>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="flex justify-center space-x-4 mb-16">
+                    <button class="filter-btn px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all bg-ink text-cake" data-category="all">全部品項</button>
+                    <button class="filter-btn px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all border border-ink/10 hover:bg-ink hover:text-cake" data-category="cloud">雲朵蛋糕系列</button>
+                    <button class="filter-btn px-8 py-3 rounded-full text-xs font-bold tracking-widest uppercase transition-all border border-ink/10 hover:bg-ink hover:text-cake" data-category="adult">大人系微苦甜</button>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="healing-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-16">
+                    <!-- Products will be injected by script.js -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Pre-footer: Community & Reviews -->
+    <section class="bg-[#4B2E1E] py-24 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-display font-bold text-[#FFF4C1] tracking-tighter leading-tight">
+                    看看大家都在吃什麼療癒自己？<br class="hidden md:block">
+                    <span class="text-berry font-serif italic">#PieceOfCake</span>
+                </h2>
+            </div>
+
+            <!-- Polaroid Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-24">
+                <!-- Polaroid 1 -->
+                <div class="group rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
+                    <div class="bg-white p-4 shadow-2xl">
+                        <div class="aspect-square bg-cake-dark overflow-hidden mb-4">
+                            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=800&auto=format&fit=crop" alt="Chocolate Cake" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerpolicy="no-referrer">
+                        </div>
+                        <p class="font-serif italic text-ink/40 text-[10px] text-center">@nina_daily</p>
+                    </div>
+                    <div class="mt-8 bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-left">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=150&auto=format&fit=crop" class="w-10 h-10 rounded-full border border-white/20" referrerpolicy="no-referrer" />
+                            <div>
+                                <p class="text-[#FFF4C1] text-xs font-bold text-left">Nina Wang</p>
+                                <div class="flex gap-0.5 mt-1 text-[#FFD700]">
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[#FFF4C1]/60 text-[10px] mb-2 font-bold uppercase tracking-widest">購買：雲朵草莓戚風</p>
+                        <p class="text-[#FFF4C1]/90 text-xs leading-relaxed italic">"這款雲朵蛋糕真的治癒了我的週一憂鬱！每週一都要來一份才能開工。"</p>
+                    </div>
+                </div>
+
+                <!-- Polaroid 2 -->
+                <div class="group rotate-[3deg] hover:rotate-0 transition-transform duration-500 mt-8 lg:mt-0">
+                    <div class="bg-white p-4 shadow-2xl">
+                        <div class="aspect-square bg-cake-dark overflow-hidden mb-4">
+                            <img src="https://images.unsplash.com/photo-1519340333755-56e9c1d04579?q=80&w=800&auto=format&fit=crop" alt="Strawberry Tart" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerpolicy="no-referrer">
+                        </div>
+                        <p class="font-serif italic text-ink/40 text-[10px] text-center">@ken_foodie</p>
+                    </div>
+                    <div class="mt-8 bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-left">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop" class="w-10 h-10 rounded-full border border-white/20" referrerpolicy="no-referrer" />
+                            <div>
+                                <p class="text-[#FFF4C1] text-xs font-bold text-left">Ken Chang</p>
+                                <div class="flex gap-0.5 mt-1 text-[#FFD700]">
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[#FFF4C1]/60 text-[10px] mb-2 font-bold uppercase tracking-widest">購買：自選禮盒系列</p>
+                        <p class="text-[#FFF4C1]/90 text-xs leading-relaxed italic">"自選禮盒包裝超美，送給朋友大家都驚艷。質感真的 Piece of Cake！"</p>
+                    </div>
+                </div>
+
+                <!-- Polaroid 3 -->
+                <div class="group rotate-[-1deg] hover:rotate-0 transition-transform duration-500 mt-8 lg:mt-0">
+                    <div class="bg-white p-4 shadow-2xl">
+                        <div class="aspect-square bg-cake-dark overflow-hidden mb-4">
+                            <img src="https://images.unsplash.com/photo-1512223784970-3985fb5c76d5?q=80&w=800&auto=format&fit=crop" alt="Matcha Dessert" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerpolicy="no-referrer">
+                        </div>
+                        <p class="font-serif italic text-ink/40 text-[10px] text-center">@alice_sweet</p>
+                    </div>
+                    <div class="mt-8 bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-left">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" class="w-10 h-10 rounded-full border border-white/20" referrerpolicy="no-referrer" />
+                            <div>
+                                <p class="text-[#FFF4C1] text-xs font-bold text-left">Alice Lin</p>
+                                <div class="flex gap-0.5 mt-1 text-[#FFD700]">
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[#FFF4C1]/60 text-[10px] mb-2 font-bold uppercase tracking-widest">購買：情緒處方 - 微憂鬱</p>
+                        <p class="text-[#FFF4C1]/90 text-xs leading-relaxed italic">"情緒處方的點子太有趣了，草莓塔的酸甜剛剛好，吃完真的舒服多了。"</p>
+                    </div>
+                </div>
+
+                <!-- Polaroid 4 -->
+                <div class="group rotate-[2deg] hover:rotate-0 transition-transform duration-500 mt-8 lg:mt-0">
+                    <div class="bg-white p-4 shadow-2xl">
+                        <div class="aspect-square bg-cake-dark overflow-hidden mb-4">
+                            <img src="https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=800&auto=format&fit=crop" alt="Lemon Cake" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerpolicy="no-referrer">
+                        </div>
+                        <p class="font-serif italic text-ink/40 text-[10px] text-center">@charlie_life</p>
+                    </div>
+                    <div class="mt-8 bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-left">
+                        <div class="flex items-center gap-3 mb-4">
+                            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=150&auto=format&fit=crop" class="w-10 h-10 rounded-full border border-white/20" referrerpolicy="no-referrer" />
+                            <div>
+                                <p class="text-[#FFF4C1] text-xs font-bold text-left">Charlie Wu</p>
+                                <div class="flex gap-0.5 mt-1 text-[#FFD700]">
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[#FFF4C1]/60 text-[10px] mb-2 font-bold uppercase tracking-widest">購買：焦糖海鹽磅蛋糕</p>
+                        <p class="text-[#FFF4C1]/90 text-xs leading-relaxed italic">"每一口都感覺到手作的溫度，誠摯推薦給追求質感的甜點愛好者。"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-cake-dark pt-24 pb-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
+                <div class="lg:col-span-2 space-y-8">
+                    <h2 class="text-3xl font-display font-bold tracking-tighter">Piece of Cake.</h2>
+                    <p class="max-w-sm text-sm opacity-60 leading-relaxed font-medium">
+                        生活很難，但選甜點可以很 Piece of Cake。我們致力於用甜點治癒每一個疲憊的靈魂。
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="hover:text-berry transition-colors">Instagram</a>
+                        <a href="#" class="hover:text-berry transition-colors">Facebook</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-bold tracking-[0.2em] uppercase mb-8 opacity-40">聯絡資訊</h4>
+                    <ul class="space-y-4 text-sm opacity-60 font-medium">
+                        <li>台北市信義區忠孝東路四段553巷22弄37號</li>
+                        <li>+886 2 2345 6789</li>
+                        <li>hello@pieceofcake.com</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-bold tracking-[0.2em] uppercase mb-8 opacity-40">支援服務</h4>
+                    <ul class="space-y-4 text-sm opacity-60 font-medium">
+                        <li><a href="faq.html" class="hover:text-berry transition-colors">常見問題 FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-12 border-t border-ink/5 text-[10px] font-bold tracking-widest uppercase opacity-40 text-center">
+                © 2026 PIECE OF CAKE. ALL RIGHTS RESERVED.
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

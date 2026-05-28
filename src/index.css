@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&family=M+PLUS+Rounded+1c:wght@400;500;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans TC", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-cute: "M PLUS Rounded 1c", sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  --color-cake: #FFF4C1;
+  --color-cake-dark: #EB9FB0;
+  --color-berry: #EB9FB0;
+  --color-accent: #F1E1FF;
+  --color-primary: #EB9FB0;
+  --color-secondary: #FFF4C1;
+  --color-ink: #4A3B3B;
+}
+
+@layer base {
+  html, body {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  body {
+    @apply bg-cake text-ink font-sans antialiased;
+  }
+  body::-webkit-scrollbar, html::-webkit-scrollbar {
+    display: none;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  section[id] {
+    scroll-margin-top: 100px;
+  }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+}
