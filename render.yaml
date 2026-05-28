@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: piece-of-cake-bakery
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+        description: "您的 Gemini API 金鑰（選填，若需要 AI 客服聊天功能請設定）"
